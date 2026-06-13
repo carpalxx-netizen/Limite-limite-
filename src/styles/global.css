@@ -1,0 +1,382 @@
+/* ============================================
+   LIMITE LIMITE — Design tokens
+   Palette: ardoise/bois sombre + rouge sang + jaune chantier
+   ============================================ */
+:root {
+  --ink: #15110f;
+  --panel: #1f1a17;
+  --wood: #3a1416;
+  --blood: #b3171c;
+  --blood-light: #d63a2e;
+  --hazard: #f4c430;
+  --hazard-dark: #2b2520;
+  --card-blue: #1c2740;
+  --card-blue-light: #2e3e63;
+  --card-red: #b3171c;
+  --card-red-light: #e0453a;
+  --paper: #f3ece1;
+  --ash: #8c8178;
+  --success: #4caf50;
+
+  --font-display: 'Anton', 'Archivo Black', 'Arial Black', sans-serif;
+  --font-body: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Space Mono', 'Courier New', monospace;
+
+  --radius-card: 16px;
+  --shadow-card: 0 10px 30px -8px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background-color: var(--ink);
+  background-image:
+    radial-gradient(ellipse at top left, rgba(179, 23, 28, 0.18), transparent 45%),
+    radial-gradient(ellipse at bottom right, rgba(244, 196, 48, 0.07), transparent 40%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.012) 0px,
+      rgba(255, 255, 255, 0.012) 1px,
+      transparent 1px,
+      transparent 40px
+    );
+  color: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--hazard);
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--hazard);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   Hazard tape — signature element
+   ============================================ */
+.hazard-tape {
+  --stripe: 28px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--hazard) 0 var(--stripe),
+    #1a1714 var(--stripe) calc(var(--stripe) * 2)
+  );
+  color: var(--ink);
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.85rem;
+  padding: 10px 0;
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.45);
+}
+
+.hazard-tape__inner {
+  display: inline-flex;
+  gap: 4rem;
+  padding-left: 2rem;
+  animation: tape-scroll 22s linear infinite;
+}
+
+.hazard-tape__inner span {
+  background: var(--ink);
+  color: var(--hazard);
+  padding: 2px 14px;
+  border-radius: 3px;
+}
+
+@keyframes tape-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ============================================
+   Layout helpers
+   ============================================ */
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1.25rem 3rem;
+  gap: 2rem;
+}
+
+.container {
+  width: 100%;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+/* ============================================
+   Brand / Logo
+   ============================================ */
+.brand {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 0.92;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.brand:active {
+  transform: scale(0.97);
+}
+
+.brand__line {
+  display: block;
+}
+
+.brand__line--limite {
+  font-size: clamp(2.4rem, 9vw, 4.2rem);
+  color: var(--paper);
+  -webkit-text-stroke: 2px var(--blood);
+}
+
+.brand__line--limite2 {
+  font-size: clamp(2.4rem, 9vw, 4.2rem);
+  color: var(--blood);
+}
+
+.brand__tagline {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--ash);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-top: 0.5rem;
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+.btn {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 1rem;
+  border: none;
+  border-radius: 10px;
+  padding: 0.95rem 1.8rem;
+  background: var(--blood);
+  color: var(--paper);
+  box-shadow: 0 6px 0 #6e0d10, var(--shadow-card);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  position: relative;
+  top: 0;
+}
+
+.btn:hover {
+  background: var(--blood-light);
+}
+
+.btn:active {
+  top: 6px;
+  box-shadow: 0 0 0 #6e0d10;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+  top: 0;
+}
+
+.btn--secondary {
+  background: transparent;
+  color: var(--paper);
+  border: 2px solid var(--ash);
+  box-shadow: none;
+}
+
+.btn--secondary:hover {
+  border-color: var(--hazard);
+  color: var(--hazard);
+  background: transparent;
+}
+
+.btn--secondary:active {
+  top: 0;
+}
+
+.btn--hazard {
+  background: var(--hazard);
+  color: var(--ink);
+  box-shadow: 0 6px 0 #a8841a, var(--shadow-card);
+}
+
+.btn--hazard:hover {
+  background: #ffd84d;
+}
+
+.btn--hazard:active {
+  top: 6px;
+  box-shadow: 0 0 0 #a8841a;
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--ash);
+  box-shadow: none;
+  border: 1px solid rgba(140, 129, 120, 0.35);
+  font-size: 0.85rem;
+  padding: 0.55rem 1.1rem;
+}
+
+.btn--ghost:hover {
+  color: var(--paper);
+  border-color: var(--paper);
+  background: transparent;
+}
+
+.btn--ghost:active {
+  top: 0;
+}
+
+.btn--danger {
+  background: transparent;
+  color: var(--blood-light);
+  border: 2px solid var(--blood);
+  box-shadow: none;
+  font-size: 0.85rem;
+  padding: 0.55rem 1.2rem;
+}
+
+.btn--danger:hover {
+  background: var(--blood);
+  color: var(--paper);
+}
+
+.btn--danger:active {
+  top: 0;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ============================================
+   Inputs
+   ============================================ */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.field label {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ash);
+}
+
+.input {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 2px solid rgba(140, 129, 120, 0.3);
+  background: rgba(255,255,255,0.03);
+  color: var(--paper);
+  transition: border-color 0.15s ease;
+}
+
+.input::placeholder {
+  color: rgba(140, 129, 120, 0.6);
+}
+
+.input:focus {
+  border-color: var(--hazard);
+  outline: none;
+}
+
+.input--code {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+/* ============================================
+   Panels
+   ============================================ */
+.panel {
+  background: linear-gradient(160deg, var(--panel), #17120f);
+  border: 1px solid rgba(244, 196, 48, 0.08);
+  border-radius: 18px;
+  padding: 1.75rem;
+  box-shadow: var(--shadow-card);
+  width: 100%;
+}
+
+.panel--center {
+  text-align: center;
+}
+
+/* ============================================
+   Game card — flip animation
+   ============================================ */
+.gamecard {
+  width: 160px;
+  height: 230px;
+  border-radius: var(--radius-card);
+  perspective: 1000px;
+  flex-shrink: 0;
+}
+
+.gamecard__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
