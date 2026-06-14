@@ -333,3 +333,138 @@ export default function Room() {
             <div className="btn-row">
               <button type="submit" className="btn btn--hazard">OK</button>
               <button type="button" className="btn btn--ghost" onClick={() => { setShowSbrPrompt(false); setSbrCodeInput('') }}>Annuler</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <div className="page__content">
+        <div className="players-list">
+          {players.map((p) => (
+            <div key={p.id} className={`player-chip ${p.id === judgeId ? 'player-chip--judge' : ''} ${p.id === playerId ? 'player-chip--me' : ''}`}>
+              <span className="player-chip__avatar">{p.pseudo.slice(0, 2)}</span>
+              <span>{p.pseudo}{p.id === playerId ? ' (toi)' : ''}</span>
+              <span className="player-chip__score">{p.score}</span>
+              {p.id === judgeId && <span className="player-chip__judge-tag">Juge</span>}
+            </div>
+          ))}
+        </div>
+
+        {room.use_hidden_deck && (
+          <p className="tag tag--hidden">Deck cache SBR active</p>
+        )}
+
+        {phase === 'waiting' && room.status === 'lobby' && (
+          <div className="panel panel--center container" style={{ maxWidth: 480 }}>
+            <p className="section-title">En attente des joueurs...</p>
+            <p className="text-ash">Partage le code <strong className="text-hazard">{room.code}</strong> a tes amis pour qu'ils rejoignent.</p>
+            {myPlayer?.is_host && (
+              <button className="btn btn--hazard" style={{ marginTop: '1rem' }} onClick={handleStartGame}>
+                Lancer la partie
+              </button>
+            )}
+            {!myPlayer?.is_host && <p className="text-ash">En attente que l'hote lance la partie...</p>}
+          </div>
+        )}
+
+        {phase !== 'waiting' && question && (
+          <div className="center-card-wrap fade-in">
+            <p className="tag" style={{ background: 'rgba(244,196,48,0.1)', color: 'var(--hazard)', border: '1px solid var(--hazard)' }}>
+              Manche {room.round_number}
+            </p>
+            <div className="center-question">{question.text}</div>
+          </div>
+        )}
+
+        {phase === 'answering' && (
+          <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+            {isJudge ? (
+              <p className="text-ash text-center">
+                Tu es le juge ce tour-ci. Detends-toi, les autres choisissent leur carte...
+                <br />
+                <span className="text-hazard">{submissions.filter(s => s.round_number === room.round_number).length} / {Math.max(players.length - 1, 0)}</span> ont repondu.
+              </p>
+            ) : mySubmission ? (
+              <p className="text-ash text-center">Carte envoyee ! En attente des autres joueurs...</p>
+            ) : (
+              <>
+                <p className="text-ash text-center">
+                  Choisis {blanksNeeded > 1 ? `${blanksNeeded} cartes` : 'une carte'} pour completer la phrase.
+                </p>
+                <button className="btn btn--hazard" disabled={selectedHandIds.length !== blanksNeeded} onClick={handleSubmit}>
+                  Valider {selectedHandIds.length}/{blanksNeeded}
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {phase === 'judging' && (
+          <div className="container fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+            <p className="text-ash text-center">
+              {isJudge ? 'Choisis la reponse la plus drole (et la plus sale).' : `${players[room.judge_index % players.length]?.pseudo} choisit la meilleure reponse...`}
+            </p>
+            <div className="hand-row">
+              {submissions.filter(s => s.round_number === room.round_number).map((sub, i) => (
+                <GameCard
+                  key={sub.id}
+                  text={sub.texts.join(' / ')}
+                  type="answer"
+                  selectable={isJudge}
+                  onClick={() => isJudge && handleJudgePick(sub.player_id)}
+                  dealIndex={i}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {phase === 'results' && (
+          <div className="container fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+            <p className="section-title section-title--hazard">Resultats de la manche</p>
+            <div className="hand-row">
+              {submissions.filter(s => s.round_number === room.round_number).map((sub, i) => {
+                const winner = players.find((p) => p.id === sub.player_id)
+                return (
+                  <div key={sub.id} className="center-card-wrap">
+                    <GameCard text={sub.texts.join(' / ')} type="answer" dealIndex={i} />
+                    <span className="text-ash" style={{ fontSize: '0.85rem' }}>{winner?.pseudo}</span>
+                  </div>
+                )
+              })}
+            </div>
+            {myPlayer?.is_host && (
+              <button className="btn btn--hazard" onClick={handleNextRound}>Manche suivante</button>
+            )}
+            {!myPlayer?.is_host && <p className="text-ash">En attente du tour suivant...</p>}
+          </div>
+        )}
+
+        {phase !== 'waiting' && !isJudge && (
+          <div className="container">
+            <p className="divider" />
+            <p className="text-ash text-center" style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              Ta main ({hand.length}/{HAND_SIZE})
+            </p>
+            <div className="hand-row">
+              {hand.map((c, i) => (
+                <GameCard
+                  key={c.handId}
+                  text={c.text}
+                  type="answer"
+                  size="sm"
+                  selectable={phase === 'answering' && !mySubmission}
+                  selected={selectedHandIds.includes(c.handId)}
+                  onClick={() => toggleSelectCard(c.handId)}
+                  dealIndex={i}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {toast && <div className="toast">{toast}</div>}
+    </div>
+  )
+}
