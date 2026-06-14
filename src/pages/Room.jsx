@@ -152,3 +152,184 @@ export default function Room() {
       await loadHand(player.id)
       if (room.current_question_id) await loadQuestion(room.current_question_id)
       if (room.round_number > 0) await loadSubmissions(room.id, room.round_number)
+    } catch (err) {
+      console.error(err)
+      showToast('Impossible de rejoindre.')
+    }
+  }
+
+  async function handleStartGame() {
+    if (!room || players.length < 2) return showToast('Il faut au moins 2 joueurs.')
+    try {
+      for (const p of players) {
+        await dealHand(room.id, p.id, room.use_hidden_deck)
+      }
+      const updated = await startNextRound(room, players)
+      setRoom(updated)
+      if (playerId) await loadHand(playerId)
+    } catch (err) {
+      console.error(err)
+      showToast('Erreur au lancement.')
+    }
+  }
+
+  function toggleSelectCard(handId) {
+    if (isJudge || room?.phase !== 'answering') return
+    setSelectedHandIds((prev) => {
+      if (prev.includes(handId)) return prev.filter((id) => id !== handId)
+      if (prev.length >= blanksNeeded) {
+        if (blanksNeeded === 1) return [handId]
+        return [...prev.slice(1), handId]
+      }
+      return [...prev, handId]
+    })
+  }
+
+  async function handleSubmit() {
+    if (!room || selectedHandIds.length !== blanksNeeded) return
+    const cardIds = selectedHandIds.map((hid) => hand.find((h) => h.handId === hid)?.cardId)
+    try {
+      await submitCards(room.id, playerId, room.round_number, selectedHandIds, cardIds)
+      setSelectedHandIds([])
+    } catch (err) {
+      console.error(err)
+      showToast('Tu as deja repondu, ou une erreur est survenue.')
+    }
+  }
+
+  async function handleJudgePick(winnerPlayerId) {
+    if (!room || !isJudge) return
+    try {
+      await judgeRound(room, winnerPlayerId)
+    } catch (err) {
+      console.error(err)
+      showToast('Erreur lors du choix.')
+    }
+  }
+
+  async function handleNextRound() {
+    if (!room) return
+    try {
+      for (const p of players) {
+        await refillHand(room.id, p.id, room.use_hidden_deck)
+      }
+      const updated = await startNextRound(room, players)
+      setRoom(updated)
+      if (playerId) await loadHand(playerId)
+    } catch (err) {
+      console.error(err)
+      showToast('Erreur au tour suivant.')
+    }
+  }
+
+  async function handleLeave() {
+    if (playerId) await leaveRoom(playerId)
+    sessionStorage.removeItem('ll_player_id')
+    sessionStorage.removeItem('ll_pseudo')
+    navigate('/')
+  }
+
+  function handleSbrTap() {
+    const next = sbrTaps + 1
+    setSbrTaps(next)
+    clearTimeout(sbrTimer.current)
+    if (next >= SBR_TAPS_NEEDED) {
+      setShowSbrPrompt(true)
+      setSbrTaps(0)
+    } else {
+      sbrTimer.current = setTimeout(() => setSbrTaps(0), 1200)
+    }
+  }
+
+  async function handleSbrSubmit(e) {
+    e.preventDefault()
+    if (sbrCodeInput.trim().toUpperCase() !== 'SBR' || !room) {
+      setSbrCodeInput('')
+      return
+    }
+    try {
+      const { data, error } = await supabase
+        .from('rooms')
+        .update({ use_hidden_deck: !room.use_hidden_deck })
+        .eq('id', room.id)
+        .select()
+        .single()
+      if (error) throw error
+      setRoom(data)
+      setShowSbrPrompt(false)
+      setSbrCodeInput('')
+      showToast(data.use_hidden_deck ? 'Deck cache active' : 'Deck cache desactive')
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="page page__content" style={{ justifyContent: 'center' }}>
+        <div className="spinner" />
+      </div>
+    )
+  }
+
+  if (pseudoModal) {
+    return (
+      <div className="page page__content" style={{ justifyContent: 'center' }}>
+        <form onSubmit={handleJoinPseudo} className="container panel" style={{ maxWidth: 380 }}>
+          <p className="section-title section-title--hazard">Rejoindre la table {code}</p>
+          <div className="field" style={{ marginTop: '1rem' }}>
+            <label htmlFor="pseudo-room">Ton pseudo</label>
+            <input
+              id="pseudo-room"
+              className="input"
+              value={pseudoInput}
+              onChange={(e) => setPseudoInput(e.target.value)}
+              maxLength={20}
+              autoFocus
+              placeholder="Ex: Mathieu33"
+            />
+          </div>
+          <div className="btn-row" style={{ marginTop: '1.25rem' }}>
+            <button type="submit" className="btn btn--hazard">Entrer</button>
+          </div>
+        </form>
+      </div>
+    )
+  }
+
+  if (!room) return null
+
+  const phase = room.phase
+  const mySubmission = submissions.find((s) => s.player_id === playerId)
+
+  return (
+    <div className="page">
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.25rem' }}>
+        <div className="brand" onClick={handleSbrTap} style={{ transformOrigin: 'left center' }}>
+          <span className="brand__line brand__line--limite" style={{ fontSize: '1.5rem' }}>Limite</span>
+          <span className="brand__line brand__line--limite2" style={{ fontSize: '1.5rem' }}>Limite</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <span className="room-code" style={{ fontSize: '0.9rem', padding: '0.35rem 0.7rem' }}>{room.code}</span>
+          <button className="btn--danger btn" style={{ fontSize: '0.8rem', padding: '0.5rem 1rem', boxShadow: 'none' }} onClick={handleLeave}>
+            Quitter
+          </button>
+        </div>
+      </header>
+
+      {showSbrPrompt && (
+        <div className="container" style={{ maxWidth: 320, alignSelf: 'center' }}>
+          <form onSubmit={handleSbrSubmit} className="panel field" style={{ gap: '0.6rem' }}>
+            <label htmlFor="sbr-code">Code secret</label>
+            <input
+              id="sbr-code"
+              className="input input--code"
+              value={sbrCodeInput}
+              onChange={(e) => setSbrCodeInput(e.target.value)}
+              maxLength={3}
+              autoFocus
+              placeholder="???"
+            />
+            <div className="btn-row">
+              <button type="submit" className="btn btn--hazard">OK</button>
+              <button type="button" className="btn btn--ghost" onClick={() => { setShowSbrPrompt(false); setSbrCodeInput('') }}>Annuler</button>
